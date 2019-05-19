@@ -1,0 +1,1 @@
+Implements a subset of https://github.com/couchbase/couchnode . Reuses many of the types in @types/couchbase. Not for production use.

@@ -1,0 +1,28 @@
+{
+  "name": "couchbase-js",
+  "version": "0.1.0",
+  "description": "Pure JavaScript/TypeScript Couchbase client for Node",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rportugal/couchbase-js.git"
+  },
+  "author": "Ricardo Portugal",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rportugal/couchbase-js/issues"
+  },
+  "homepage": "https://github.com/rportugal/couchbase-js#readme",
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.2",
+    "jest": "^24.8.0",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.4.5"
+  }
+}
