@@ -1,6 +1,4 @@
 import * as rp from 'request-promise';
-import * as tough from 'tough-cookie';
-
 import { ConnectionOpts } from './couchbase';
 
 export default class Bucket {
@@ -25,7 +23,6 @@ export default class Bucket {
     const opts = {
       uri: `${this.uiUrl}/uilogin`,
       rejectUnauthorized: !(this.options && this.options.insecure),
-      method: 'POST',
       jar: this.cookieJar,
       form: {
         user: this.username,
@@ -41,7 +38,6 @@ export default class Bucket {
   }
 
   async get(key: string): Promise<any> {
-    // TODO: check if auth is still okay
     await this.authorize();
 
     const opts = {
