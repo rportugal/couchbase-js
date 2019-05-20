@@ -1,5 +1,5 @@
 # Overview
-This project implements a pure JS client based on the undocumented Couchbase REST APIs that power the Web UI.
+This project implements a pure JS client based on the undocumented Couchbase REST APIs that power the Web UI. As such, it only works if you already have credentials for the UI.
 
 # Usage
 ```
