@@ -1,5 +1,8 @@
+import * as _ from 'lodash';
 import { Authenticator, PasswordAuthenticator } from './auth';
 import Bucket from './bucket';
+import N1qlQuery from './n1qlquery';
+import connstr, { ConnStrSpec } from './connstr';
 
 /**
  * Authenticator for performing certificate-based authentication.
@@ -22,12 +25,13 @@ interface ClusterConstructorOptions {
 }
 
 export default class Cluster {
+  _dsnObj: ConnStrSpec | string;
   _auther: Authenticator | null = null;
   _connectingBuckets: Bucket[] = [];
   _connectedBuckets: Bucket[] = [];
 
   constructor(cnstr?: string, options?: ClusterConstructorOptions) {
-    this.dsnObj = connstr.parse(cnstr);
+    this._dsnObj = connstr.parse(cnstr);
     this._auther = null;
   }
 
@@ -52,22 +56,43 @@ export default class Cluster {
   }
 
   /**
-     * Open a bucket to perform operations. This will begin the handshake process immediately and operations will complete later. Subscribe to the connect event to be alerted when the connection is ready, though be aware operations can be successfully queued before this.
-     * @param name The name of the bucket to open.
-     */
-    openBucket(name?: string): Promise<Bucket>;
+   * Open a bucket to perform operations. This will begin the handshake process immediately and operations will complete later. Subscribe to the connect event to be alerted when the connection is ready, though be aware operations can be successfully queued before this.
+   * @param name The name of the bucket to open.
+   */
+  openBucket(name?: string): Promise<Bucket>;
 
+  /**
+   * Open a bucket to perform operations. This will begin the handshake process immediately and operations will complete later. Subscribe to the connect event to be alerted when the connection is ready, though be aware operations can be successfully queued before this.
+   * @param name The name of the bucket to open.
+   * @param password Password for the bucket.
+   */
+  openBucket(name?: string, password?: string): Promise<Bucket>;
 
-    /**
-     * Open a bucket to perform operations. This will begin the handshake process immediately and operations will complete later. Subscribe to the connect event to be alerted when the connection is ready, though be aware operations can be successfully queued before this.
-     * @param name The name of the bucket to open.
-     * @param password Password for the bucket.
-     */
-    openBucket(name?: string, password?: string): Promise<Bucket>;
-
-    openBucket(name?: string, password?: string): Promise<Bucket> {
-      const bucketDsnObj = connstr.normalize(this.dsnObj);
-
+  openBucket(name?: string, password?: string): Promise<Bucket> {
+    if (!password) {
+      password = '';
     }
 
+    const username = name;
+
+    const bucketDsnObj = connstr.normalize(this._dsnObj);
+    (bucketDsnObj as ConnStrSpec).bucket = name;
+
+    const bucket = new Bucket({
+      dsnObj: bucketDsnObj,
+      username,
+      password
+    });
+
+    this._connectingBuckets.push(bucket);
+  }
+
+  query(
+    query: N1qlQuery /* | SearchQuery | CbasQuery*/ ,
+    params: Object | Array
+  ): Bucket.N1qlQueryResponse /* | Bucket.FtsQueryResponse | Cluster.CbasQueryResponse*/ {
+    if (query instanceof N1qlQuery) {
+      return this._n1ql(query, params);
+    }
+  }
 }

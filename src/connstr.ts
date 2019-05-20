@@ -1,6 +1,6 @@
 import * as qs from 'querystring';
 
-interface ConnStrSpec {
+export interface ConnStrSpec {
   scheme?: string;
   hosts?: any[] | string; //{Array.<Array.<string,number>>}
   bucket?: string;
@@ -162,7 +162,7 @@ export class ConnStr {
     return this._normalize(dsn);
   }
 
-  parse(dsn: string | null): ConnStrSpec {
+  parse(dsn?: string | null): ConnStrSpec {
     return this._normalize(this._parse(dsn));
   }
 
