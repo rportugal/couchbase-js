@@ -1,64 +1,58 @@
-import connStr from './connstr';
+import * as rp from 'request-promise';
+import * as tough from 'tough-cookie';
+
+import { ConnectionOpts } from './couchbase';
+
 export default class Bucket {
-  _cb: any;
-  connected: boolean | null;
-  waitQueue: any[];
-  // private _cluster: Cluster;
-  // private _name: string;
-  // async query(query: string, params: )
-  // async _viewQuery()
+  private uiUrl: string;
+  private name: string;
+  private username: string;
+  private password: string;
+  private options: ConnectionOpts;
+  private cookieJar: any;
 
-  constructor(options: any) {
-    // We normalize both for consistency as well as to
-    //  create a duplicate object to use
-    options.dsnObj = connStr.normalize(options.dsnObj);
+  constructor(uiUrl: string, name: string, username: string, password: string, options: ConnectionOpts) {
+    this.uiUrl = uiUrl;
+    this.name = name;
+    this.username = username;
+    this.password = password;
+    this.options = options;
 
-    const bucketDsn = connStr.stringify(options.dsnObj);
-    const bucketUser = options.username;
-    const bucketPass = options.password;
-
-    this._cb = new CBjs(bucketDsn, bucketUser, bucketPass);
-    this.connected = null;
-    this.waitQueue = [];
+    this.cookieJar = rp.jar();
   }
 
-  /**
-   * Invokes an operation and dispatches a callback error if one occurs.
-   */
-  private _invoke(fn: any, args: any[]): void {
-    try {
-      fn.apply(this._cb, args);
-    } catch (e) {
-      args[args.length - 1](e, null);
-    }
+  authorize(): Promise<void> {
+    const opts = {
+      uri: `${this.uiUrl}/uilogin`,
+      rejectUnauthorized: !(this.options && this.options.insecure),
+      method: 'POST',
+      jar: this.cookieJar,
+      form: {
+        user: this.username,
+        password: this.password
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      rp.post(opts)
+        .then(() => resolve())
+        .catch(err => reject(err));
+    });
   }
 
-  /**
-   * Will either invoke the binding method specified by fn, or alternatively
-   * push the operation to a queue which is flushed once a connection
-   * has been established or failed.
-   */
-  private _maybeInvoke(fn: any, args: any[]): void {
-    if (this.connected === true) {
-      this._invoke(fn, args);
-    } else if (this.connected === false) {
-      throw new Error('cannot perform operations on a shutdown bucket');
-    } else {
-      this.waitQueue.push([fn, args]);
-    }
+  async get(key: string): Promise<any> {
+    // TODO: check if auth is still okay
+    await this.authorize();
+
+    const opts = {
+      uri: `${this.uiUrl}/pools/default/buckets/${this.name}/docs/${encodeURIComponent(key)}`,
+      rejectUnauthorized: !(this.options && this.options.insecure),
+      jar: this.cookieJar,
+      headers: {
+        'ns-server-ui': 'yes'
+      }
+    };
+
+    return rp.get(opts).then(res => JSON.parse(JSON.parse(res).json));
   }
-
-  get(key: string | Buffer, options: any): Promise<any> {
-    // this._checkHashkeyOption(options);
-    return this._maybeInvoke(this._cb.get, [key, options.hashkey, 0, 0]);
-  }
-
-  private _n1ql(query: string, params: any) {
-
-  }
-
-  /**
-   * Shuts down this connection
-   */
-  disconnect() {}
 }

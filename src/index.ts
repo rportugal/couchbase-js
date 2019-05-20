@@ -1,3 +1,3 @@
-import Cluster from './cluster';
+import Couchbase from './couchbase';
 
-const cluster = new Cluster
+export { Couchbase };
