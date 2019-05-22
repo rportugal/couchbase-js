@@ -1,5 +1,12 @@
 import * as rp from 'request-promise';
+import * as request from 'request';
 import { ConnectionOpts } from './couchbase';
+
+const defaultOpts = (s: any): request.CoreOptions => ({
+  timeout: 5000,
+  rejectUnauthorized: !(s.options && s.options.insecure),
+  jar: s.cookieJar
+});
 
 export default class Bucket {
   private uiUrl: string;
@@ -21,6 +28,7 @@ export default class Bucket {
 
   authorize(): Promise<void> {
     const opts = {
+      ...defaultOpts(this),
       uri: `${this.uiUrl}/uilogin`,
       rejectUnauthorized: !(this.options && this.options.insecure),
       jar: this.cookieJar,
@@ -41,14 +49,33 @@ export default class Bucket {
     await this.authorize();
 
     const opts = {
+      ...defaultOpts(this),
       uri: `${this.uiUrl}/pools/default/buckets/${this.name}/docs/${encodeURIComponent(key)}`,
-      rejectUnauthorized: !(this.options && this.options.insecure),
-      jar: this.cookieJar,
       headers: {
         'ns-server-ui': 'yes'
       }
     };
 
     return rp.get(opts).then(res => JSON.parse(JSON.parse(res).json));
+  }
+
+  async query(query: string): Promise<any> {
+    await this.authorize();
+
+    const opts = {
+      ...defaultOpts(this),
+      uri: `${this.uiUrl}/_p/query/query/service`,
+      headers: {
+        'ns-server-ui': 'yes'
+      },
+      body: {
+        statement: query,
+        pretty: true,
+        scan_consistency: 'not_bounded'
+      },
+      json: true
+    };
+
+    return rp.post(opts).then(res => res.results);
   }
 }
