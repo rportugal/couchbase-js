@@ -1,6 +1,6 @@
 {
   "name": "couchbase-js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pure JavaScript/TypeScript Couchbase client for Node",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

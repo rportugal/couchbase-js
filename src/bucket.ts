@@ -78,4 +78,23 @@ export default class Bucket {
 
     return rp.post(opts).then(res => res.results);
   }
+
+  async list(skip: number, limit: number): Promise<string> {
+    await this.authorize();
+
+    const opts = {
+      ...defaultOpts(this),
+      uri: `${this.uiUrl}/pools/default/buckets/${this.name}/docs`,
+      headers: {
+        'ns-server-ui': 'yes'
+      },
+      qs: {
+        skip,
+        limit,
+        include_docs: false
+      }
+    };
+
+    return rp.get(opts).then(res => JSON.parse(res).rows.map((row: any) => row.id));
+  }
 }
